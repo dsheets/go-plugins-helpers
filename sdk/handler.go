@@ -17,10 +17,15 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler with an http mux.
-func NewHandler(manifest string) Handler {
+func NewHandler(manifest string, activateChecks ...func(w http.ResponseWriter, r *http.Request) bool) Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc(activatePath, func(w http.ResponseWriter, r *http.Request) {
+		for _, check := range activateChecks {
+			if !check(w, r) {
+				return
+			}
+		}
 		w.Header().Set("Content-Type", DefaultContentTypeV1_1)
 		fmt.Fprintln(w, manifest)
 	})
